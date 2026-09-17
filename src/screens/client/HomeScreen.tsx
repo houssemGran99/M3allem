@@ -13,7 +13,8 @@ import Avatar from '../../components/Avatar';
 import Button from '../../components/Button';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import { useTheme } from '../../theme/ThemeContext';
-import { categories, professionals } from '../../data/mock';
+import { useLanguage } from '../../i18n/LanguageContext';
+import { categories, mohamed } from '../../data/mock';
 import { ClientStackParamList } from '../../navigation/types';
 
 const tintMap = { blue: 'blueSoft', amber: 'amberSoft', brand: 'brandSoft', sub: 'sub' } as const;
@@ -21,76 +22,73 @@ const fgMap = { blue: 'blue', amber: 'amber', brand: 'brand', sub: 'ink2' } as c
 
 export default function HomeScreen() {
   const { colors } = useTheme();
+  const { t, isRTL } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<ClientStackParamList>>();
-  const previous = professionals[0];
 
   return (
     <ScreenContainer>
       <Between style={{ marginBottom: 14 }}>
         <View>
           <AppText size={11} color={colors.ink2}>
-            Service address
+            {t('lbl_addr')}
           </AppText>
           <Row gap={5} style={{ marginTop: 2 }}>
             <Feather name="map-pin" size={14} color={colors.brand} />
             <AppText weight="semibold" size={14}>
-              Clifton, Bristol
+              {t('c1_loc')}
             </AppText>
-            <Feather name="chevron-down" size={12} color={colors.ink3} />
+            <Feather name={isRTL ? 'chevron-left' : 'chevron-right'} size={12} color={colors.ink3} style={{ transform: [{ rotate: '90deg' }] }} />
           </Row>
         </View>
         <IconButton name="bell" size={32} />
       </Between>
 
-      <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('Search')}>
+      <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('PostRequest')}>
         <View style={{ marginBottom: 14 }}>
-          <Field icon="search" placeholder="Leaking tap, rewire, deep clean…" />
+          <Field icon="search" placeholder={t('c1_search')} />
         </View>
       </TouchableOpacity>
 
-      <Card bg={colors.brandSoft} borderColor="transparent" style={{ marginBottom: 18 }}>
-        <Row gap={9}>
-          <View
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
-              backgroundColor: colors.card,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Feather name="zap" size={16} color={colors.brand} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <AppText weight="semibold" size={13} color={colors.brandInk}>
-              Need someone today?
-            </AppText>
-            <AppText size={11} color={colors.brandInk} style={{ opacity: 0.8, marginTop: 1 }}>
-              17 verified trades free this afternoon
-            </AppText>
-          </View>
-          <Feather name="chevron-right" size={16} color={colors.brandInk} />
-        </Row>
-      </Card>
+      <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('PostRequest')}>
+        <Card bg={colors.brandSoft} borderColor="transparent" style={{ marginBottom: 18 }}>
+          <Row gap={9}>
+            <View
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                backgroundColor: colors.card,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Feather name="mic" size={16} color={colors.brand} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <AppText weight="semibold" size={13} color={colors.brandInk}>
+                {t('c1_banner_t')}
+              </AppText>
+              <AppText size={11} color={colors.brandInk} style={{ opacity: 0.8, marginTop: 1 }}>
+                {t('c1_banner_s')}
+              </AppText>
+            </View>
+            <Feather name={isRTL ? 'chevron-left' : 'chevron-right'} size={16} color={colors.brandInk} />
+          </Row>
+        </Card>
+      </TouchableOpacity>
 
       <Between style={{ marginBottom: 10 }}>
         <AppText weight="semibold" size={15}>
-          Browse trades
+          {t('c1_cat_title')}
         </AppText>
         <AppText weight="semibold" size={11} color={colors.brand}>
-          See all
+          {t('common_see_all')}
         </AppText>
       </Between>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
         {categories.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate('Search', { categoryId: cat.id, categoryName: cat.name })}
-            style={{ width: '31%' }}
-          >
+          <TouchableOpacity key={cat.id} activeOpacity={0.8} onPress={() => navigation.navigate('PostRequest')} style={{ width: '31%' }}>
             <Card padding={10}>
               <View
                 style={{
@@ -106,10 +104,10 @@ export default function HomeScreen() {
                 <Feather name={cat.icon as any} size={15} color={colors[fgMap[cat.tint]]} />
               </View>
               <AppText weight="semibold" size={12}>
-                {cat.name}
+                {t(cat.nameKey)}
               </AppText>
               <AppText size={11} color={colors.ink2}>
-                {cat.proCount} pros
+                {t(cat.countKey)}
               </AppText>
             </Card>
           </TouchableOpacity>
@@ -117,30 +115,32 @@ export default function HomeScreen() {
       </View>
 
       <AppText weight="semibold" size={15} style={{ marginBottom: 8 }}>
-        Booked before
+        {t('c1_recent_title')}
       </AppText>
-      <Card padding={11}>
-        <Row gap={10}>
-          <Avatar initials={previous.initials} tint={previous.avatarTint} size={40} />
-          <View style={{ flex: 1 }}>
-            <Row gap={5}>
-              <AppText weight="semibold" size={13}>
-                {previous.name}
+      <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('ArtisanProfile', { artisanId: mohamed.id })}>
+        <Card padding={11}>
+          <Row gap={10}>
+            <Avatar initials={mohamed.initials} tint={mohamed.avatarTint} size={40} />
+            <View style={{ flex: 1 }}>
+              <Row gap={5}>
+                <AppText weight="semibold" size={13}>
+                  {mohamed.name}
+                </AppText>
+                {mohamed.verified && <VerifiedBadge size={13} />}
+              </Row>
+              <AppText size={11} color={colors.ink2}>
+                {t('cat_plumb')} · {mohamed.rating} ★ · {t('c1_last')}
               </AppText>
-              {previous.verified && <VerifiedBadge size={13} />}
-            </Row>
-            <AppText size={11} color={colors.ink2}>
-              {previous.trade.replace('Gas Safe ', '')} · {previous.rating} ★ · Last job Mar 2
-            </AppText>
-          </View>
-          <Button
-            title="Rebook"
-            size="sm"
-            fullWidth={false}
-            onPress={() => navigation.navigate('ProfessionalProfile', { proId: previous.id })}
-          />
-        </Row>
-      </Card>
+            </View>
+            <Button
+              title={t('c1_rebook')}
+              size="sm"
+              fullWidth={false}
+              onPress={() => navigation.navigate('ArtisanProfile', { artisanId: mohamed.id })}
+            />
+          </Row>
+        </Card>
+      </TouchableOpacity>
     </ScreenContainer>
   );
 }

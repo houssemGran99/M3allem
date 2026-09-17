@@ -6,37 +6,32 @@ import { Row } from '../../components/Row';
 import Card from '../../components/Card';
 import Avatar from '../../components/Avatar';
 import { useTheme } from '../../theme/ThemeContext';
-import { professionals } from '../../data/mock';
-
-const previews = [
-  'Sounds good, see you at 2pm',
-  'Boiler service booked in for Thursday',
-  "I'll bring the part with me",
-];
+import { useLanguage } from '../../i18n/LanguageContext';
+import { quotes } from '../../data/mock';
 
 export default function MessagesScreen() {
   const { colors } = useTheme();
+  const { t } = useLanguage();
 
   return (
     <ScreenContainer>
       <AppText weight="bold" size={20} style={{ marginBottom: 16 }}>
-        Messages
+        {t('nav_msg')}
       </AppText>
-      {professionals.map((p, i) => (
-        <Card key={p.id} style={{ marginBottom: 9 }}>
+      {quotes.map((quote) => (
+        <Card key={quote.id} style={{ marginBottom: 9 }}>
           <Row gap={10}>
-            <Avatar initials={p.initials} tint={p.avatarTint} size={40} fontSize={13} />
+            <Avatar initials={quote.initials} tint={quote.avatarTint} size={40} fontSize={13} />
             <View style={{ flex: 1 }}>
               <AppText weight="semibold" size={13}>
-                {p.name}
+                {quote.artisanName}
               </AppText>
-              <AppText size={12} color={colors.ink2} numberOfLines={1}>
-                {previews[i % previews.length]}
-              </AppText>
+              {quote.noteKey && (
+                <AppText size={12} color={colors.ink2} numberOfLines={1}>
+                  {t(quote.noteKey)}
+                </AppText>
+              )}
             </View>
-            <AppText size={11} color={colors.ink3}>
-              {i === 0 ? 'now' : `${i}d`}
-            </AppText>
           </Row>
         </Card>
       ))}

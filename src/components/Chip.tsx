@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { useLanguage } from '../i18n/LanguageContext';
 import AppText from './AppText';
 
 type Props = {
@@ -12,13 +13,14 @@ type Props = {
 
 export default function Chip({ label, active, onPress, icon }: Props) {
   const { colors, radii } = useTheme();
+  const { isRTL } = useLanguage();
   const Wrapper = onPress ? TouchableOpacity : View;
   return (
     <Wrapper
       onPress={onPress}
       activeOpacity={0.8}
       style={{
-        flexDirection: 'row',
+        flexDirection: isRTL ? 'row-reverse' : 'row',
         alignItems: 'center',
         gap: 5,
         height: 28,

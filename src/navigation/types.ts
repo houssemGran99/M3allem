@@ -1,29 +1,27 @@
 export type ClientTabParamList = {
   Home: undefined;
-  Search: { categoryId?: string; categoryName?: string } | undefined;
-  Bookings: undefined;
+  PostRequest: undefined;
+  Quotes: undefined;
   Messages: undefined;
   Account: undefined;
 };
 
 export type ClientStackParamList = ClientTabParamList & {
   ClientTabs: undefined;
-  ProfessionalProfile: { proId: string };
-  Booking: { proId: string };
-  Tracking: { proId: string };
-  Review: { proId: string };
+  ArtisanProfile: { artisanId: string };
+  AppointmentConfirmed: { artisanId: string };
+  CompletedReview: { artisanId: string };
 };
 
 export type WorkerTabParamList = {
-  Jobs: undefined;
-  Diary: undefined;
-  Earnings: undefined;
-  WorkerMessages: undefined;
+  Leads: undefined;
+  MyQuotes: undefined;
+  Credits: undefined;
+  Status: undefined;
   Profile: undefined;
 };
 
 export type WorkerStackParamList = WorkerTabParamList & {
   WorkerTabs: undefined;
-  JobDetail: { jobId: string };
-  ActiveJob: { jobId: string };
+  LeadDetail: { leadId: string };
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { useLanguage } from '../i18n/LanguageContext';
 import AppText from './AppText';
 
 export type TimelineStep = {
@@ -12,15 +13,18 @@ export type TimelineStep = {
 
 export default function Timeline({ steps }: { steps: TimelineStep[] }) {
   const { colors } = useTheme();
+  const { isRTL } = useLanguage();
+  const sideKey = isRTL ? 'right' : 'left';
+
   return (
-    <View style={{ paddingLeft: 20 }}>
+    <View style={{ [isRTL ? 'paddingRight' : 'paddingLeft']: 20 }}>
       {steps.map((step, i) => (
         <View key={step.id} style={{ paddingVertical: 5, position: 'relative' }}>
           {i !== steps.length - 1 && (
             <View
               style={{
                 position: 'absolute',
-                left: -15,
+                [sideKey]: -15,
                 top: 16,
                 bottom: -5,
                 width: 2,
@@ -31,7 +35,7 @@ export default function Timeline({ steps }: { steps: TimelineStep[] }) {
           <View
             style={{
               position: 'absolute',
-              left: -19,
+              [sideKey]: -19,
               top: 6,
               width: 12,
               height: 12,

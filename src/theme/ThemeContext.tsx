@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import { ColorScheme, dark, light } from './colors';
-import { fontFamily, fontSize, radii, shadow, spacing } from './tokens';
+import { fontFamily, fontFamilyAr, fontSize, radii, shadow, spacing } from './tokens';
 
 export type Role = 'client' | 'worker';
 
@@ -12,6 +12,7 @@ type ThemeContextValue = {
   spacing: typeof spacing;
   fontSize: typeof fontSize;
   fontFamily: typeof fontFamily;
+  fontFamilyAr: typeof fontFamilyAr;
   shadow: typeof shadow;
   role: Role;
   setRole: (role: Role) => void;
@@ -32,6 +33,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       spacing,
       fontSize,
       fontFamily,
+      fontFamilyAr,
       shadow,
       role,
       setRole,

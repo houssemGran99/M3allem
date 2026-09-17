@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import ScreenContainer from '../../components/ScreenContainer';
 import AppText from '../../components/AppText';
@@ -8,17 +8,18 @@ import Card from '../../components/Card';
 import Avatar from '../../components/Avatar';
 import Button from '../../components/Button';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLanguage } from '../../i18n/LanguageContext';
 
-const menuItems: { icon: React.ComponentProps<typeof Feather>['name']; label: string }[] = [
-  { icon: 'map-pin', label: 'Saved addresses' },
-  { icon: 'credit-card', label: 'Payment methods' },
-  { icon: 'bell', label: 'Notifications' },
-  { icon: 'shield', label: 'Privacy & security' },
-  { icon: 'help-circle', label: 'Help & support' },
+const menuItems: { icon: React.ComponentProps<typeof Feather>['name']; labelFr: string }[] = [
+  { icon: 'map-pin', labelFr: 'Adresses enregistrées' },
+  { icon: 'bell', labelFr: 'Notifications' },
+  { icon: 'shield', labelFr: 'Confidentialité et sécurité' },
+  { icon: 'help-circle', labelFr: 'Aide et support' },
 ];
 
 export default function AccountScreen() {
-  const { colors, setRole } = useTheme();
+  const { colors, radii, setRole } = useTheme();
+  const { t, lang, setLang, isRTL } = useLanguage();
 
   return (
     <ScreenContainer>
@@ -26,18 +27,51 @@ export default function AccountScreen() {
         <Avatar initials="AH" tint="brand" size={56} fontSize={18} />
         <View>
           <AppText weight="semibold" size={16}>
-            Alex Hart
+            Amira Haddad
           </AppText>
           <AppText size={12} color={colors.ink2}>
-            alex.hart@email.com
+            amira.haddad@email.com
           </AppText>
         </View>
+      </Row>
+
+      <AppText size={11} weight="semibold" color={colors.ink3} style={{ marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        {t('common_language')}
+      </AppText>
+      <Row
+        gap={4}
+        style={{
+          backgroundColor: colors.sub,
+          borderWidth: 1,
+          borderColor: colors.line,
+          borderRadius: radii.pill,
+          padding: 4,
+          marginBottom: 20,
+          alignSelf: isRTL ? 'flex-end' : 'flex-start',
+        }}
+      >
+        {(['fr', 'ar'] as const).map((code) => (
+          <TouchableOpacity key={code} onPress={() => setLang(code)}>
+            <View
+              style={{
+                paddingHorizontal: 18,
+                paddingVertical: 8,
+                borderRadius: radii.pill,
+                backgroundColor: lang === code ? colors.card : 'transparent',
+              }}
+            >
+              <AppText weight="medium" size={14} color={lang === code ? colors.ink : colors.ink2}>
+                {code === 'fr' ? 'Français' : 'العربية'}
+              </AppText>
+            </View>
+          </TouchableOpacity>
+        ))}
       </Row>
 
       <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 16 }}>
         {menuItems.map((item, i) => (
           <Row
-            key={item.label}
+            key={item.labelFr}
             gap={10}
             style={{
               padding: 13,
@@ -47,9 +81,9 @@ export default function AccountScreen() {
           >
             <Feather name={item.icon} size={16} color={colors.ink2} />
             <AppText size={13} style={{ flex: 1 }}>
-              {item.label}
+              {item.labelFr}
             </AppText>
-            <Feather name="chevron-right" size={14} color={colors.ink3} />
+            <Feather name={isRTL ? 'chevron-left' : 'chevron-right'} size={14} color={colors.ink3} />
           </Row>
         ))}
       </Card>
@@ -58,16 +92,16 @@ export default function AccountScreen() {
         <Row gap={9} style={{ marginBottom: 8 }}>
           <Feather name="briefcase" size={16} color={colors.brandInk} />
           <AppText weight="semibold" size={13} color={colors.brandInk}>
-            Are you a tradesperson?
+            {t('account_switch_worker_t')}
           </AppText>
         </Row>
         <AppText size={12} color={colors.brandInk} style={{ opacity: 0.85, marginBottom: 12, lineHeight: 18 }}>
-          Switch to the worker app to browse jobs, manage your diary and track earnings.
+          {t('account_switch_worker_s')}
         </AppText>
-        <Button title="Switch to worker app" onPress={() => setRole('worker')} />
+        <Button title={t('account_switch_worker_btn')} onPress={() => setRole('worker')} />
       </Card>
 
-      <Button title="Log out" variant="ghost" onPress={() => {}} />
+      <Button title={t('common_logout')} variant="ghost" onPress={() => {}} />
     </ScreenContainer>
   );
 }

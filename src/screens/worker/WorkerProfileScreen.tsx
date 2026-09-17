@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, View } from 'react-native';
+import { View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import ScreenContainer from '../../components/ScreenContainer';
 import AppText from '../../components/AppText';
@@ -9,33 +9,37 @@ import Avatar from '../../components/Avatar';
 import Button from '../../components/Button';
 import Pill from '../../components/Pill';
 import ProgressBar from '../../components/ProgressBar';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import { useTheme } from '../../theme/ThemeContext';
-import { professionals } from '../../data/mock';
+import { useLanguage } from '../../i18n/LanguageContext';
+import { mohamed } from '../../data/mock';
 
 export default function WorkerProfileScreen() {
   const { colors, setRole } = useTheme();
-  const pro = professionals[0];
+  const { t } = useLanguage();
+  const artisan = mohamed;
+  const shownCredentials = artisan.credentials.filter((c) => c.id !== 'ref');
 
   return (
     <ScreenContainer>
       <Row gap={12} style={{ marginBottom: 14 }}>
-        <Avatar initials={pro.initials} tint={pro.avatarTint} size={56} fontSize={18} />
+        <Avatar initials={artisan.initials} tint={artisan.avatarTint} size={56} fontSize={18} />
         <View style={{ flex: 1 }}>
           <Row gap={5}>
             <AppText weight="semibold" size={16}>
-              {pro.name}
+              {artisan.name}
             </AppText>
-            <Feather name="shield" size={14} color={colors.brand} />
+            <VerifiedBadge size={14} />
           </Row>
           <AppText size={11} color={colors.ink2}>
-            {pro.trade} · Bristol
+            {t(artisan.roleKey)}
           </AppText>
           <Row gap={6} style={{ marginTop: 2 }}>
             <AppText weight="bold" size={12} color={colors.amber}>
-              {pro.rating.toFixed(1)}★
+              {artisan.rating.toFixed(1)}★
             </AppText>
             <AppText size={12} color={colors.ink2}>
-              {pro.reviewCount} reviews
+              · {artisan.jobCount} {t('w6_jobs_l')}
             </AppText>
           </Row>
         </View>
@@ -44,9 +48,9 @@ export default function WorkerProfileScreen() {
       <Card style={{ marginBottom: 12 }}>
         <Between style={{ marginBottom: 9 }}>
           <AppText weight="semibold" size={13}>
-            Trady score
+            {t('w6_score')}
           </AppText>
-          <Pill label="Top rated" tone="g" />
+          <Pill label={t('w6_top')} tone="g" />
         </Between>
         <View style={{ marginBottom: 9 }}>
           <ProgressBar pct={94} color={colors.brand} />
@@ -54,15 +58,15 @@ export default function WorkerProfileScreen() {
         <Between>
           <View>
             <AppText size={11} color={colors.ink2}>
-              Completion
+              {t('w6_stat1')}
             </AppText>
             <AppText weight="semibold" size={13}>
-              {pro.completedPct ?? 98}%
+              98%
             </AppText>
           </View>
           <View>
             <AppText size={11} color={colors.ink2}>
-              On time
+              {t('w6_stat2')}
             </AppText>
             <AppText weight="semibold" size={13}>
               96%
@@ -70,78 +74,57 @@ export default function WorkerProfileScreen() {
           </View>
           <View>
             <AppText size={11} color={colors.ink2}>
-              Reply time
+              {t('w6_stat3')}
             </AppText>
             <AppText weight="semibold" size={13}>
-              42 min
+              {t('w6_stat3_v')}
             </AppText>
           </View>
         </Between>
-        <AppText size={11} color={colors.ink2} style={{ marginTop: 9, lineHeight: 17 }}>
-          Top rated pros appear above standard listings and get first refusal on emergency jobs.
-        </AppText>
       </Card>
 
       <AppText size={11} weight="semibold" color={colors.ink3} style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        Credentials
+        {t('w6_lbl_verif')}
       </AppText>
       <Card padding={0} style={{ overflow: 'hidden', marginBottom: 12 }}>
-        {(pro.credentials ?? []).map((c, i, arr) => (
-          <Row key={c.id} gap={9} style={{ padding: 11, borderBottomWidth: i === arr.length - 1 ? 0 : 1, borderBottomColor: colors.line }}>
-            <Feather name={c.status === 'live' ? 'shield' : 'clock'} size={15} color={c.status === 'live' ? colors.brand : colors.amber} />
-            <View style={{ flex: 1 }}>
-              <AppText weight="semibold" size={13}>
-                {c.label}
-              </AppText>
-              <AppText size={11} color={colors.ink2}>
-                {c.detail}
-              </AppText>
-            </View>
-            <Pill label={c.status === 'live' ? 'Live' : 'Renew'} tone={c.status === 'live' ? 'g' : 'a'} />
+        {shownCredentials.map((c, i) => (
+          <Row key={c.id} gap={9} style={{ padding: 11, borderBottomWidth: i === shownCredentials.length - 1 ? 0 : 1, borderBottomColor: colors.line }}>
+            <Feather name="shield" size={15} color={colors.brand} />
+            <AppText size={13} weight="semibold" style={{ flex: 1 }}>
+              {t(c.labelKey)}
+            </AppText>
+            <Pill label={t('w6_live')} tone="g" />
           </Row>
         ))}
       </Card>
 
-      <AppText size={11} weight="semibold" color={colors.ink3} style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        Availability
-      </AppText>
       <Card style={{ marginBottom: 16 }}>
-        <Between style={{ paddingVertical: 3 }}>
-          <AppText size={12.5}>Mon – Fri</AppText>
-          <AppText size={12.5} weight="semibold">
-            8:00am – 6:00pm
-          </AppText>
-        </Between>
-        <Between style={{ paddingVertical: 3 }}>
-          <AppText size={12.5}>Saturday</AppText>
-          <AppText size={12.5} weight="semibold">
-            9:00am – 1:00pm
-          </AppText>
-        </Between>
-        <Between style={{ paddingVertical: 3 }}>
-          <AppText size={12.5}>Sunday</AppText>
-          <AppText size={12.5} color={colors.ink2}>
-            Unavailable
-          </AppText>
-        </Between>
-        <View style={{ height: 1, backgroundColor: colors.line, marginVertical: 8 }} />
-        <Between>
-          <AppText size={13}>Emergency call-outs</AppText>
-          <Switch value trackColor={{ true: colors.brand, false: colors.line }} thumbColor="#fff" />
-        </Between>
+        <Row gap={9}>
+          <View style={{ width: 32, height: 32, borderRadius: 9, backgroundColor: colors.sub, alignItems: 'center', justifyContent: 'center' }}>
+            <Feather name="gift" size={15} color={colors.ink2} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <AppText weight="semibold" size={13}>
+              {t('w6_invite_t')}
+            </AppText>
+            <AppText size={11} color={colors.ink2}>
+              {t('w6_invite_s')}
+            </AppText>
+          </View>
+        </Row>
       </Card>
 
       <Card bg={colors.brandSoft} borderColor="transparent" style={{ marginBottom: 12 }}>
         <Row gap={9} style={{ marginBottom: 8 }}>
           <Feather name="user" size={16} color={colors.brandInk} />
           <AppText weight="semibold" size={13} color={colors.brandInk}>
-            Looking for work done?
+            {t('account_switch_client_t')}
           </AppText>
         </Row>
         <AppText size={12} color={colors.brandInk} style={{ opacity: 0.85, marginBottom: 12, lineHeight: 18 }}>
-          Switch to the client app to browse trades and book a job.
+          {t('account_switch_client_s')}
         </AppText>
-        <Button title="Switch to client app" onPress={() => setRole('client')} />
+        <Button title={t('account_switch_client_btn')} onPress={() => setRole('client')} />
       </Card>
     </ScreenContainer>
   );

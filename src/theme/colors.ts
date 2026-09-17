@@ -15,6 +15,8 @@ export type ColorScheme = {
   redSoft: string;
   blue: string;
   blueSoft: string;
+  ochre: string;
+  ochreSoft: string;
   white: string;
 };
 
@@ -35,6 +37,8 @@ export const light: ColorScheme = {
   redSoft: '#FAE9E8',
   blue: '#2B6CB0',
   blueSoft: '#E7F0F9',
+  ochre: '#B5772E',
+  ochreSoft: '#F6EADB',
   white: '#FFFFFF',
 };
 
@@ -55,5 +59,7 @@ export const dark: ColorScheme = {
   redSoft: '#33201F',
   blue: '#7AAEE6',
   blueSoft: '#182634',
+  ochre: '#E0A868',
+  ochreSoft: '#2E2216',
   white: '#FFFFFF',
 };

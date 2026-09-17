@@ -34,6 +34,13 @@ export const fontFamily = {
   bold: 'Inter_700Bold',
 };
 
+export const fontFamilyAr = {
+  regular: 'Cairo_400Regular',
+  medium: 'Cairo_500Medium',
+  semibold: 'Cairo_600SemiBold',
+  bold: 'Cairo_700Bold',
+};
+
 export const shadow = {
   shadowColor: '#10201C',
   shadowOpacity: 0.08,

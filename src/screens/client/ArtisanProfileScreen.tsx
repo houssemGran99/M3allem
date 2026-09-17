@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, View } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { Feather } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppText from '../../components/AppText';
@@ -13,63 +13,68 @@ import Button from '../../components/Button';
 import StatTile from '../../components/StatTile';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import ImagePlaceholder from '../../components/ImagePlaceholder';
-import ProgressBar from '../../components/ProgressBar';
 import { useTheme } from '../../theme/ThemeContext';
-import { professionals, reviews } from '../../data/mock';
+import { useLanguage } from '../../i18n/LanguageContext';
+import { mohamed, reviews } from '../../data/mock';
 import { ClientStackParamList } from '../../navigation/types';
 
-export default function ProfessionalProfileScreen() {
+export default function ArtisanProfileScreen() {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<ClientStackParamList>>();
-  const route = useRoute<RouteProp<ClientStackParamList, 'ProfessionalProfile'>>();
-  const pro = professionals.find((p) => p.id === route.params.proId) ?? professionals[0];
+  const artisan = mohamed;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.page }} edges={['top']}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-        <View style={{ height: 128, backgroundColor: colors.sub }}>
-          <View style={{ position: 'absolute', top: 12, left: 16 }}>
+        <View style={{ height: 118, backgroundColor: colors.sub }}>
+          <View style={{ position: 'absolute', top: 12, left: 16, right: 16 }}>
             <IconButton name="arrow-left" size={32} bg={colors.card} onPress={() => navigation.goBack()} />
           </View>
         </View>
         <View style={{ paddingHorizontal: 16 }}>
           <Row gap={11} style={{ marginTop: -24, alignItems: 'flex-end' }}>
-            <Avatar initials={pro.initials} tint={pro.avatarTint} size={62} fontSize={19} borderWidth={3} />
+            <Avatar initials={artisan.initials} tint={artisan.avatarTint} size={62} fontSize={19} borderWidth={3} />
             <View style={{ paddingBottom: 5 }}>
               <Row gap={5}>
                 <AppText weight="semibold" size={16}>
-                  {pro.name}
+                  {artisan.name}
                 </AppText>
-                {pro.verified && <VerifiedBadge size={14} />}
+                {artisan.verified && <VerifiedBadge size={14} />}
               </Row>
               <AppText size={11} color={colors.ink2}>
-                {pro.trade} · {pro.yearsExperience ?? 3} yrs
+                {t(artisan.roleKey)}
               </AppText>
             </View>
           </Row>
 
           <Row gap={8} style={{ marginVertical: 14 }}>
-            <StatTile label="reviews" value={`${pro.rating.toFixed(1)}★`} valueColor={colors.amber} />
-            <StatTile label="Completed" value={`${pro.completedPct ?? 95}%`} />
-            <StatTile label="Replies" value={pro.replyTime ?? '<2h'} />
+            <StatTile label={t('c4_stat_reviews')} value={`${artisan.rating.toFixed(1)}★`} valueColor={colors.amber} />
+            <StatTile label={t('c4_stat_jobs')} value={`${artisan.jobCount}`} />
+            <StatTile label={t('c4_stat_reply')} value={t(artisan.replyTimeKey)} />
           </Row>
 
-          {pro.verified && (
+          {artisan.verified && (
             <Card bg={colors.brandSoft} borderColor="transparent" style={{ marginBottom: 16 }}>
-              <Row gap={7} style={{ marginBottom: 6 }}>
+              <Row gap={7} style={{ marginBottom: 8 }}>
                 <VerifiedBadge size={14} />
                 <AppText weight="semibold" size={12} color={colors.brandInk}>
-                  Verified by Trady
+                  {t('c4_verif_title')}
                 </AppText>
               </Row>
-              <AppText size={11} color={colors.brandInk} style={{ opacity: 0.85, lineHeight: 18 }}>
-                {pro.credentials?.map((c) => c.label).join(' · ') || 'ID checked · Background verified'}
-              </AppText>
+              {artisan.credentials.map((c) => (
+                <Row key={c.id} gap={6} style={{ marginBottom: 5 }}>
+                  <Feather name="check" size={12} color={colors.brandInk} />
+                  <AppText size={11} color={colors.brandInk} style={{ flex: 1 }}>
+                    {t(c.labelKey)}
+                  </AppText>
+                </Row>
+              ))}
             </Card>
           )}
 
           <AppText weight="semibold" size={15} style={{ marginBottom: 8 }}>
-            Recent work
+            {t('c4_portfolio')}
           </AppText>
           <Row gap={7} style={{ marginBottom: 16 }}>
             <ImagePlaceholder height={74} icon="image" />
@@ -77,36 +82,11 @@ export default function ProfessionalProfileScreen() {
             <ImagePlaceholder height={74} icon="image" />
           </Row>
 
-          <AppText weight="semibold" size={15} style={{ marginBottom: 10 }}>
-            Reviews
+          <AppText weight="semibold" size={15} style={{ marginBottom: 8 }}>
+            {t('c4_reviews')}
           </AppText>
-          <Row gap={12} style={{ marginBottom: 10, alignItems: 'flex-start' }}>
-            <View style={{ alignItems: 'center' }}>
-              <AppText weight="bold" size={24}>
-                {pro.rating.toFixed(1)}
-              </AppText>
-              <Row gap={2}>
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <Ionicons key={i} name="star" size={11} color={colors.amber} />
-                ))}
-              </Row>
-            </View>
-            <View style={{ flex: 1, gap: 5 }}>
-              {(pro.ratingBreakdown ?? [{ stars: 5, pct: 80 }]).map((r) => (
-                <Row key={r.stars} gap={6}>
-                  <AppText size={11} color={colors.ink2}>
-                    {r.stars}
-                  </AppText>
-                  <View style={{ flex: 1 }}>
-                    <ProgressBar pct={r.pct} />
-                  </View>
-                </Row>
-              ))}
-            </View>
-          </Row>
-
           {reviews.map((review) => (
-            <Card key={review.id} style={{ marginBottom: 9 }}>
+            <Card key={review.id}>
               <Between>
                 <AppText weight="semibold" size={12}>
                   {review.author}
@@ -116,7 +96,7 @@ export default function ProfessionalProfileScreen() {
                 </AppText>
               </Between>
               <AppText size={12} color={colors.ink2} style={{ marginTop: 4, lineHeight: 18 }}>
-                {review.text}
+                {t(review.textKey)}
               </AppText>
             </Card>
           ))}
@@ -142,21 +122,18 @@ export default function ProfessionalProfileScreen() {
         <Between>
           <View>
             <AppText size={11} color={colors.ink2}>
-              Typical call-out
+              {t('c4_price_lbl')}
             </AppText>
-            <Row gap={5}>
-              <AppText weight="bold" size={16}>
-                £{pro.price}
-              </AppText>
-              <AppText size={11} color={colors.ink2}>
-                · 1–2 hrs
-              </AppText>
-            </Row>
+            <AppText weight="bold" size={16}>
+              {artisan.priceMin}–{artisan.priceMax} {t('cur')}
+            </AppText>
           </View>
-          <Row gap={8}>
-            <IconButton name="message-circle" size={46} />
-            <Button title={`Book ${pro.name.split(' ')[0]}`} fullWidth={false} style={{ paddingHorizontal: 26 }} onPress={() => navigation.navigate('Booking', { proId: pro.id })} />
-          </Row>
+          <Button
+            title={t('c4_whatsapp')}
+            fullWidth={false}
+            style={{ paddingHorizontal: 22 }}
+            onPress={() => navigation.navigate('AppointmentConfirmed', { artisanId: artisan.id })}
+          />
         </Between>
       </View>
     </SafeAreaView>

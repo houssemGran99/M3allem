@@ -5,6 +5,7 @@ import IconButton from './IconButton';
 import AppText from './AppText';
 import Pill from './Pill';
 import type { PillTone } from './Pill';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function AppBar({
   title,
@@ -20,6 +21,7 @@ export default function AppBar({
   tagTone?: PillTone;
 }) {
   const navigation = useNavigation();
+  const { isRTL } = useLanguage();
   return (
     <Row gap={10} style={{ paddingBottom: 12 }}>
       {showBack && (
@@ -28,7 +30,7 @@ export default function AppBar({
       <AppText weight="semibold" size={16}>
         {title}
       </AppText>
-      <Row gap={8} style={{ marginLeft: 'auto' }}>
+      <Row gap={8} style={isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }}>
         {tag && <Pill label={tag} tone={tagTone} />}
         {right}
       </Row>

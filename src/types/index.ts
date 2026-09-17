@@ -1,98 +1,98 @@
+import { TranslationKey } from '../i18n/translations';
+
+export type Tint = 'brand' | 'amber' | 'blue' | 'ochre';
+
 export type TradeCategory = {
   id: string;
-  name: string;
-  proCount: number;
+  nameKey: TranslationKey;
+  countKey: TranslationKey;
   icon: string;
   tint: 'blue' | 'amber' | 'brand' | 'sub';
 };
 
 export type Credential = {
   id: string;
-  label: string;
-  detail: string;
-  status: 'live' | 'renew';
+  labelKey: TranslationKey;
+  status: 'live' | 'pending';
 };
 
-export type Professional = {
+export type Artisan = {
   id: string;
   name: string;
   initials: string;
-  avatarTint: 'brand' | 'amber' | 'blue';
-  trade: string;
+  avatarTint: Tint;
+  roleKey: TranslationKey;
   rating: number;
   reviewCount: number;
-  distanceMiles: number;
-  price: number;
+  jobCount: number;
+  replyTimeKey: TranslationKey;
+  priceMin: number;
+  priceMax: number;
   verified: boolean;
-  badges: string[];
-  availability: string;
-  availabilityUrgent?: boolean;
-  yearsExperience?: number;
-  completedPct?: number;
-  replyTime?: string;
-  credentials?: Credential[];
-  ratingBreakdown?: { stars: number; pct: number }[];
+  credentials: Credential[];
+};
+
+export type Quote = {
+  id: string;
+  artisanId: string;
+  artisanName: string;
+  initials: string;
+  avatarTint: Tint;
+  price: number;
+  rating: number;
+  distanceKm: number;
+  noteKey?: TranslationKey;
+  timeKey: TranslationKey;
+  highlighted?: boolean;
+};
+
+export type LeadStatus = 'urgent' | 'recurring' | 'new';
+
+export type WorkerLead = {
+  id: string;
+  status: LeadStatus;
+  titleKey: TranslationKey;
+  area: string;
+  distanceKm: number;
+  postedKey: TranslationKey;
+  budgetKey?: TranslationKey;
+  unlockCost: number;
+  unlocked: boolean;
+};
+
+export type MyQuoteStatus = 'pending' | 'accepted';
+
+export type MyQuoteEntry = {
+  id: string;
+  titleKey: TranslationKey;
+  clientName: string;
+  price: number;
+  status: MyQuoteStatus;
+  sentKey: TranslationKey;
+  highlighted?: boolean;
+};
+
+export type CreditPack = {
+  id: string;
+  nameKey: TranslationKey;
+  credits: number;
+  price: number;
+  subKey: TranslationKey;
+  popular?: boolean;
+};
+
+export type AEStepState = 'done' | 'now' | 'upcoming';
+
+export type AEStep = {
+  id: string;
+  titleKey: TranslationKey;
+  subKey: TranslationKey;
+  state: AEStepState;
 };
 
 export type Review = {
   id: string;
   author: string;
   rating: number;
-  text: string;
-};
-
-export type BookedJob = {
-  id: string;
-  proId: string;
-  title: string;
-  description: string;
-  date: string;
-  arrivalWindow: string;
-  price: number;
-  bookingFee: number;
-};
-
-export type WorkerJob = {
-  id: string;
-  clientInitials: string;
-  clientTint: 'brand' | 'amber' | 'blue';
-  clientName: string;
-  clientRating: number;
-  title: string;
-  description: string;
-  status: 'urgent' | 'recurring' | 'scheduled';
-  area: string;
-  distanceMiles: number;
-  duration: string;
-  payout: number;
-  jobTotal: number;
-  feePct: number;
-  address: string;
-  parking: string;
-  arrival: string;
-  jobsBooked?: number;
-};
-
-export type DiaryEntry = {
-  id: string;
-  day: string;
-  time: string;
-  meridiem: string;
-  title: string;
-  area: string;
-  clientName: string;
-  price: number;
-  recurring?: boolean;
-  accent: 'amber' | 'blue' | 'brand';
-};
-
-export type EarningsEntry = {
-  id: string;
-  clientInitials: string;
-  clientTint: 'brand' | 'amber' | 'blue';
-  title: string;
-  date: string;
-  duration: string;
-  clientName: string;
-  amount: number;
+  textKey: TranslationKey;
 };

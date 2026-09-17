@@ -2,8 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import AppText from './AppText';
-
-type Tint = 'brand' | 'amber' | 'blue';
+import { Tint } from '../types';
 
 export default function Avatar({
   initials,
@@ -19,22 +18,22 @@ export default function Avatar({
   borderWidth?: number;
 }) {
   const { colors } = useTheme();
-  const bg = tint === 'amber' ? colors.amberSoft : tint === 'blue' ? colors.blueSoft : colors.brandSoft;
-  const fg = tint === 'amber' ? colors.amber : tint === 'blue' ? colors.blue : colors.brandInk;
+  const bgMap: Record<Tint, string> = { amber: colors.amberSoft, blue: colors.blueSoft, ochre: colors.ochreSoft, brand: colors.brandSoft };
+  const fgMap: Record<Tint, string> = { amber: colors.amber, blue: colors.blue, ochre: colors.ochre, brand: colors.brandInk };
   return (
     <View
       style={{
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: bg,
+        backgroundColor: bgMap[tint],
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth,
         borderColor: colors.card,
       }}
     >
-      <AppText weight="semibold" size={fontSize ?? size * 0.34} color={fg}>
+      <AppText weight="semibold" size={fontSize ?? size * 0.34} color={fgMap[tint]}>
         {initials}
       </AppText>
     </View>
