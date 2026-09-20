@@ -18,8 +18,10 @@ import {
 import { useFonts as useCairoFonts } from 'expo-font';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import { LanguageProvider } from './src/i18n/LanguageContext';
+import { AuthProvider } from './src/state/AuthContext';
 import { CreditsProvider } from './src/state/CreditsContext';
 import { WorkerDataProvider } from './src/state/WorkerDataContext';
+import { ClientDataProvider } from './src/state/ClientDataContext';
 import RootNavigator from './src/navigation/RootNavigator';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -55,11 +57,15 @@ export default function App() {
       <SafeAreaProvider>
         <LanguageProvider>
           <ThemeProvider>
-            <CreditsProvider>
-              <WorkerDataProvider>
-                <RootNavigator />
-              </WorkerDataProvider>
-            </CreditsProvider>
+            <AuthProvider>
+              <CreditsProvider>
+                <WorkerDataProvider>
+                  <ClientDataProvider>
+                    <RootNavigator />
+                  </ClientDataProvider>
+                </WorkerDataProvider>
+              </CreditsProvider>
+            </AuthProvider>
           </ThemeProvider>
         </LanguageProvider>
       </SafeAreaProvider>

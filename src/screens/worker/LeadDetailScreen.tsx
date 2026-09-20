@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,47 +11,73 @@ import Card from '../../components/Card';
 import Avatar from '../../components/Avatar';
 import Button from '../../components/Button';
 import ImagePlaceholder from '../../components/ImagePlaceholder';
-import Field from '../../components/Field';
-import Pill from '../../components/Pill';
+import TextField from '../../components/TextField';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useCredits } from '../../state/CreditsContext';
 import { useWorkerData } from '../../state/WorkerDataContext';
-import { workerLeads } from '../../data/mock';
+import { ApiClientError } from '../../api/client';
 import { WorkerStackParamList } from '../../navigation/types';
 
 export default function LeadDetailScreen() {
   const { colors } = useTheme();
-  const { t } = useLanguage();
-  const { balance, spendCredit } = useCredits();
+  const { t, lang } = useLanguage();
+  const { balance } = useCredits();
   const { leads, unlockLead, submitQuote } = useWorkerData();
   const navigation = useNavigation<NativeStackNavigationProp<WorkerStackParamList>>();
   const route = useRoute<RouteProp<WorkerStackParamList, 'LeadDetail'>>();
-  const lead = leads.find((l) => l.id === route.params.leadId) ?? workerLeads[0];
+  const lead = leads.find((l) => l._id === route.params.leadId);
+
+  const [unlocking, setUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+
+  const [price, setPrice] = useState('');
+  const [timeSlot, setTimeSlot] = useState('');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
-  const handleUnlock = () => {
-    spendCredit(lead.unlockCost);
-    unlockLead(lead.id);
+  if (!lead) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.page, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.brand} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  const handleUnlock = async () => {
+    setUnlockError(null);
+    setUnlocking(true);
+    try {
+      await unlockLead(lead._id);
+    } catch (e) {
+      setUnlockError(e instanceof ApiClientError ? e.message : 'Something went wrong');
+    } finally {
+      setUnlocking(false);
+    }
   };
 
-  const handleSubmitQuote = () => {
-    submitQuote({
-      id: `mq-${Date.now()}`,
-      titleKey: lead.titleKey,
-      clientName: 'Sarra M.',
-      price: 35,
-      status: 'pending',
-      sentKey: 'w3_sent1',
-    });
-    setSent(true);
+  const handleSubmitQuote = async () => {
+    const priceNum = Number(price);
+    if (!priceNum || priceNum <= 0 || !timeSlot.trim()) return;
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      await submitQuote(lead._id, { price: priceNum, timeSlot: timeSlot.trim(), message: message.trim() || undefined });
+      setSent(true);
+    } catch (e) {
+      setSubmitError(e instanceof ApiClientError ? e.message : 'Something went wrong');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!lead.unlocked) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.page }} edges={['top']}>
         <View style={{ padding: 16, flex: 1 }}>
-          <AppBar title={t(lead.titleKey)} />
+          <AppBar title={lead.category.name[lang]} />
           <Card soft style={{ alignItems: 'center', padding: 24, marginTop: 20 }}>
             <View
               style={{
@@ -72,7 +98,17 @@ export default function LeadDetailScreen() {
             <AppText size={12} color={colors.ink2} style={{ textAlign: 'center', marginBottom: 18 }}>
               {t('w1_cap')}
             </AppText>
-            <Button title={`${t('w1_unlock')} (${balance} ${t('wnav_credits')})`} onPress={handleUnlock} disabled={balance < lead.unlockCost} />
+            {unlockError && (
+              <AppText size={12} color={colors.red} style={{ marginBottom: 10, textAlign: 'center' }}>
+                {unlockError}
+              </AppText>
+            )}
+            <Button
+              title={`${t('w1_unlock')} (${balance ?? '…'} ${t('wnav_credits')})`}
+              onPress={handleUnlock}
+              loading={unlocking}
+              disabled={balance !== null && balance < 1}
+            />
           </Card>
         </View>
       </SafeAreaView>
@@ -84,25 +120,24 @@ export default function LeadDetailScreen() {
       <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
         <AppBar title={t('w2_title')} tag={t('w2_unlocked')} tagTone="g" />
 
-        <Card style={{ marginBottom: 12 }}>
-          <Row gap={10}>
-            <Avatar initials="SM" tint="ochre" size={36} fontSize={12} />
-            <View style={{ flex: 1 }}>
-              <AppText weight="semibold" size={13}>
-                Sarra M.
-              </AppText>
-              <AppText size={11} color={colors.ink2}>
-                {t('w2_client_meta')}
-              </AppText>
-            </View>
-          </Row>
-        </Card>
+        {lead.client && (
+          <Card style={{ marginBottom: 12 }}>
+            <Row gap={10}>
+              <Avatar initials={lead.client.name.slice(0, 2).toUpperCase()} tint="ochre" size={36} fontSize={12} />
+              <View style={{ flex: 1 }}>
+                <AppText weight="semibold" size={13}>
+                  {lead.client.name}
+                </AppText>
+              </View>
+            </Row>
+          </Card>
+        )}
 
         <AppText weight="semibold" size={13} style={{ marginBottom: 3 }}>
-          {t(lead.titleKey)}
+          {lead.category.name[lang]}
         </AppText>
         <AppText size={12} color={colors.ink2} style={{ marginBottom: 10, lineHeight: 18 }}>
-          {t('w2_desc')}
+          {lead.description}
         </AppText>
         <Row gap={6} style={{ marginBottom: 14 }}>
           <ImagePlaceholder width={60} height={60} icon="image" />
@@ -114,10 +149,10 @@ export default function LeadDetailScreen() {
             <Feather name="map-pin" size={14} color={colors.ink2} />
             <View style={{ flex: 1 }}>
               <AppText weight="semibold" size={13}>
-                {t('c1_loc')}
+                {lead.address?.line}
               </AppText>
               <AppText size={11} color={colors.ink2}>
-                {t('c2_addr_sub')}
+                {lead.address?.city}
               </AppText>
             </View>
             <Feather name="map" size={16} color={colors.ink2} />
@@ -131,7 +166,11 @@ export default function LeadDetailScreen() {
               {t('w2_sent_confirm')}
             </AppText>
             <View style={{ marginTop: 14, width: '100%' }}>
-              <Button title={t('wnav_quotes')} variant="ghost" onPress={() => navigation.navigate('WorkerTabs', { screen: 'MyQuotes' } as never)} />
+              <Button
+                title={t('wnav_quotes')}
+                variant="ghost"
+                onPress={() => navigation.navigate('WorkerTabs', { screen: 'MyQuotes' } as never)}
+              />
             </View>
           </Card>
         ) : (
@@ -139,21 +178,29 @@ export default function LeadDetailScreen() {
             <AppText size={11} weight="semibold" color={colors.ink3} style={{ marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
               {t('w2_lbl_quote')}
             </AppText>
-            <Row gap={8} style={{ marginBottom: 8 }}>
+            <Row gap={8}>
               <View style={{ flex: 1 }}>
-                <Field placeholder={t('w2_price_ph')} />
+                <TextField value={price} onChangeText={setPrice} placeholder={t('w2_price_ph')} keyboardType="numeric" />
               </View>
               <View style={{ flex: 1 }}>
-                <Field placeholder={t('w2_time_ph')} />
+                <TextField value={timeSlot} onChangeText={setTimeSlot} placeholder={t('w2_time_ph')} />
               </View>
             </Row>
-            <View style={{ marginBottom: 6 }}>
-              <Field placeholder={t('w2_msg_ph')} multiline />
-            </View>
+            <TextField value={message} onChangeText={setMessage} placeholder={t('w2_msg_ph')} multiline numberOfLines={2} />
             <AppText size={11} color={colors.ink2} style={{ textAlign: 'center', marginBottom: 16 }}>
               {t('w2_note')}
             </AppText>
-            <Button title={t('w2_submit')} onPress={handleSubmitQuote} />
+            {submitError && (
+              <AppText size={12} color={colors.red} style={{ marginBottom: 10 }}>
+                {submitError}
+              </AppText>
+            )}
+            <Button
+              title={t('w2_submit')}
+              onPress={handleSubmitQuote}
+              loading={submitting}
+              disabled={!price || !timeSlot.trim()}
+            />
           </>
         )}
       </ScrollView>

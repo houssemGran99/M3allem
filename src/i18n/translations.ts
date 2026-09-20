@@ -79,6 +79,7 @@ export const translations = {
   },
 
   c3_title: { fr: '3 devis reçus', ar: '3 عروض توصلولك' },
+  c3_title_suffix: { fr: 'devis reçus', ar: 'عروض توصلولك' },
   c3_sub: { fr: "Pour : fuite sous l'évier", ar: 'على: تسريب تحت الحوض' },
   c3_sort: { fr: 'Trié par : le plus rapide', ar: 'مرتب: الأسرع' },
   c3_quote1_note: { fr: "« Je peux passer avant 16h, j'ai le matériel »", ar: '«نجي قبل الـ4، عندي العدة»' },
@@ -86,6 +87,8 @@ export const translations = {
   c3_quote2_note: { fr: '« Disponible demain matin si besoin »', ar: '«موجود غدوة الصباح إذا تحب»' },
   c3_quote2_time: { fr: 'Demain, 9h', ar: 'غدوة، 9:00' },
   c3_chat: { fr: 'Discuter', ar: 'احكيلو' },
+  c3_empty_no_request: { fr: "Tu n'as pas encore publié de demande.", ar: 'ما نشرتش طلب لحد الآن.' },
+  c3_empty_no_quotes: { fr: 'Aucun devis reçu pour le moment. Reviens un peu plus tard.', ar: 'ما وصلوش عروض لحد الآن. عاود شوف من بعد.' },
   c3_captitle: { fr: 'Comparer les devis', ar: 'قارن العروض' },
   c3_cap: {
     fr: "Le devis remplace le prix fixe : c'est la norme locale, et forcer un tarif affiché aurait réduit la conversion au lieu de l'augmenter.",
@@ -277,6 +280,28 @@ export const translations = {
   account_switch_client_t: { fr: 'Tu cherches un service ?', ar: 'قاعد تلوّج على خدمة؟' },
   account_switch_client_s: { fr: 'Passe côté client pour publier une demande.', ar: 'بدّل لجهة الحريف باش تنشر طلب.' },
   account_switch_client_btn: { fr: 'Passer en mode client', ar: 'بدّل لحريف' },
+
+  auth_login_title: { fr: 'Content de te revoir', ar: 'مرحبا بيك من جديد' },
+  auth_login_sub: { fr: 'Connecte-toi pour continuer', ar: 'دخل باش تكمل' },
+  auth_email: { fr: 'E-mail', ar: 'البريد الإلكتروني' },
+  auth_password: { fr: 'Mot de passe', ar: 'كلمة السر' },
+  auth_login_btn: { fr: 'Se connecter', ar: 'دخول' },
+  auth_no_account: { fr: "Pas encore de compte ?", ar: 'ما عندكش حساب؟' },
+  auth_create_account: { fr: 'Créer un compte', ar: 'أنشئ حساب' },
+  auth_or: { fr: 'ou essayer avec un compte de démo', ar: 'أو جرّب بحساب تجريبي' },
+  auth_demo_client: { fr: 'Démo client', ar: 'تجربة حريف' },
+  auth_demo_worker: { fr: 'Démo artisan', ar: 'تجربة صنايعي' },
+
+  auth_register_title: { fr: 'Créer un compte', ar: 'أنشئ حسابك' },
+  auth_register_sub: { fr: 'Rejoins M3allem en une minute', ar: 'انضم لـ M3allem في دقيقة' },
+  auth_name: { fr: 'Nom complet', ar: 'الاسم الكامل' },
+  auth_phone: { fr: 'Téléphone', ar: 'الهاتف' },
+  auth_i_am: { fr: 'Je suis...', ar: 'أنا...' },
+  auth_role_client: { fr: 'Un client', ar: 'حريف' },
+  auth_role_worker: { fr: 'Un artisan', ar: 'صنايعي' },
+  auth_register_btn: { fr: 'Créer mon compte', ar: 'أنشئ حسابي' },
+  auth_have_account: { fr: 'Déjà un compte ?', ar: 'عندك حساب؟' },
+  auth_login_link: { fr: 'Se connecter', ar: 'دخول' },
 } satisfies Record<string, Entry>;
 
 export type TranslationKey = keyof typeof translations;

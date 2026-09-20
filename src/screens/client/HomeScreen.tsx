@@ -1,5 +1,5 @@
-import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,7 +14,10 @@ import Button from '../../components/Button';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLanguage } from '../../i18n/LanguageContext';
-import { categories, mohamed } from '../../data/mock';
+import { useAuth } from '../../state/AuthContext';
+import { useClientData } from '../../state/ClientDataContext';
+import { listCategories } from '../../api/categories';
+import { ApiCategory } from '../../api/types';
 import { ClientStackParamList } from '../../navigation/types';
 
 const tintMap = { blue: 'blueSoft', amber: 'amberSoft', brand: 'brandSoft', sub: 'sub' } as const;
@@ -22,8 +25,30 @@ const fgMap = { blue: 'blue', amber: 'amber', brand: 'brand', sub: 'ink2' } as c
 
 export default function HomeScreen() {
   const { colors } = useTheme();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, lang } = useLanguage();
+  const { user } = useAuth();
+  const { myRequests } = useClientData();
   const navigation = useNavigation<NativeStackNavigationProp<ClientStackParamList>>();
+
+  const [categories, setCategories] = useState<ApiCategory[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  useEffect(() => {
+    listCategories()
+      .then(({ categories: fetched }) => setCategories(fetched))
+      .finally(() => setLoadingCategories(false));
+  }, []);
+
+  const recentContact = useMemo(() => {
+    for (const r of myRequests) {
+      if (r.status !== 'completed' || typeof r.acceptedQuote !== 'object') continue;
+      const artisan = r.acceptedQuote.artisan;
+      if (typeof artisan === 'object' && 'name' in artisan) {
+        return { _id: artisan._id, name: artisan.name };
+      }
+    }
+    return null;
+  }, [myRequests]);
 
   return (
     <ScreenContainer>
@@ -35,7 +60,7 @@ export default function HomeScreen() {
           <Row gap={5} style={{ marginTop: 2 }}>
             <Feather name="map-pin" size={14} color={colors.brand} />
             <AppText weight="semibold" size={14}>
-              {t('c1_loc')}
+              {user?.city ?? t('c1_loc')}
             </AppText>
             <Feather name={isRTL ? 'chevron-left' : 'chevron-right'} size={12} color={colors.ink3} style={{ transform: [{ rotate: '90deg' }] }} />
           </Row>
@@ -86,61 +111,66 @@ export default function HomeScreen() {
         </AppText>
       </Between>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
-        {categories.map((cat) => (
-          <TouchableOpacity key={cat.id} activeOpacity={0.8} onPress={() => navigation.navigate('PostRequest')} style={{ width: '31%' }}>
-            <Card padding={10}>
-              <View
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 10,
-                  backgroundColor: colors[tintMap[cat.tint]],
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 6,
-                }}
-              >
-                <Feather name={cat.icon as any} size={15} color={colors[fgMap[cat.tint]]} />
-              </View>
-              <AppText weight="semibold" size={12}>
-                {t(cat.nameKey)}
-              </AppText>
-              <AppText size={11} color={colors.ink2}>
-                {t(cat.countKey)}
-              </AppText>
+      {loadingCategories ? (
+        <ActivityIndicator color={colors.brand} style={{ marginVertical: 20 }} />
+      ) : (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
+          {categories.map((cat) => (
+            <TouchableOpacity key={cat._id} activeOpacity={0.8} onPress={() => navigation.navigate('PostRequest')} style={{ width: '31%' }}>
+              <Card padding={10}>
+                <View
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 10,
+                    backgroundColor: colors[tintMap[cat.tint]],
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 6,
+                  }}
+                >
+                  <Feather name={cat.icon as any} size={15} color={colors[fgMap[cat.tint]]} />
+                </View>
+                <AppText weight="semibold" size={12}>
+                  {cat.name[lang]}
+                </AppText>
+              </Card>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {recentContact && (
+        <>
+          <AppText weight="semibold" size={15} style={{ marginBottom: 8 }}>
+            {t('c1_recent_title')}
+          </AppText>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('ArtisanProfile', { artisanId: recentContact._id })}
+          >
+            <Card padding={11}>
+              <Row gap={10}>
+                <Avatar initials={recentContact.name.slice(0, 2).toUpperCase()} tint="brand" size={40} />
+                <View style={{ flex: 1 }}>
+                  <Row gap={5}>
+                    <AppText weight="semibold" size={13}>
+                      {recentContact.name}
+                    </AppText>
+                    <VerifiedBadge size={13} />
+                  </Row>
+                </View>
+                <Button
+                  title={t('c1_rebook')}
+                  size="sm"
+                  fullWidth={false}
+                  onPress={() => navigation.navigate('ArtisanProfile', { artisanId: recentContact._id })}
+                />
+              </Row>
             </Card>
           </TouchableOpacity>
-        ))}
-      </View>
-
-      <AppText weight="semibold" size={15} style={{ marginBottom: 8 }}>
-        {t('c1_recent_title')}
-      </AppText>
-      <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('ArtisanProfile', { artisanId: mohamed.id })}>
-        <Card padding={11}>
-          <Row gap={10}>
-            <Avatar initials={mohamed.initials} tint={mohamed.avatarTint} size={40} />
-            <View style={{ flex: 1 }}>
-              <Row gap={5}>
-                <AppText weight="semibold" size={13}>
-                  {mohamed.name}
-                </AppText>
-                {mohamed.verified && <VerifiedBadge size={13} />}
-              </Row>
-              <AppText size={11} color={colors.ink2}>
-                {t('cat_plumb')} · {mohamed.rating} ★ · {t('c1_last')}
-              </AppText>
-            </View>
-            <Button
-              title={t('c1_rebook')}
-              size="sm"
-              fullWidth={false}
-              onPress={() => navigation.navigate('ArtisanProfile', { artisanId: mohamed.id })}
-            />
-          </Row>
-        </Card>
-      </TouchableOpacity>
+        </>
+      )}
     </ScreenContainer>
   );
 }

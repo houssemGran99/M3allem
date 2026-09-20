@@ -1,9 +1,7 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { ColorScheme, dark, light } from './colors';
 import { fontFamily, fontFamilyAr, fontSize, radii, shadow, spacing } from './tokens';
-
-export type Role = 'client' | 'worker';
 
 type ThemeContextValue = {
   colors: ColorScheme;
@@ -14,8 +12,6 @@ type ThemeContextValue = {
   fontFamily: typeof fontFamily;
   fontFamilyAr: typeof fontFamilyAr;
   shadow: typeof shadow;
-  role: Role;
-  setRole: (role: Role) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -23,7 +19,6 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
-  const [role, setRole] = useState<Role>('client');
 
   const value = useMemo<ThemeContextValue>(
     () => ({
@@ -35,10 +30,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       fontFamily,
       fontFamilyAr,
       shadow,
-      role,
-      setRole,
     }),
-    [isDark, role]
+    [isDark]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

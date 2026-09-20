@@ -9,6 +9,7 @@ import Avatar from '../../components/Avatar';
 import Button from '../../components/Button';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { useAuth } from '../../state/AuthContext';
 
 const menuItems: { icon: React.ComponentProps<typeof Feather>['name']; labelFr: string }[] = [
   { icon: 'map-pin', labelFr: 'Adresses enregistrées' },
@@ -18,19 +19,20 @@ const menuItems: { icon: React.ComponentProps<typeof Feather>['name']; labelFr: 
 ];
 
 export default function AccountScreen() {
-  const { colors, radii, setRole } = useTheme();
+  const { colors, radii } = useTheme();
   const { t, lang, setLang, isRTL } = useLanguage();
+  const { user, logout } = useAuth();
 
   return (
     <ScreenContainer>
       <Row gap={12} style={{ marginBottom: 20 }}>
-        <Avatar initials="AH" tint="brand" size={56} fontSize={18} />
+        <Avatar initials={(user?.name ?? '??').slice(0, 2).toUpperCase()} tint="brand" size={56} fontSize={18} />
         <View>
           <AppText weight="semibold" size={16}>
-            Amira Haddad
+            {user?.name}
           </AppText>
           <AppText size={12} color={colors.ink2}>
-            amira.haddad@email.com
+            {user?.email}
           </AppText>
         </View>
       </Row>
@@ -88,20 +90,7 @@ export default function AccountScreen() {
         ))}
       </Card>
 
-      <Card bg={colors.brandSoft} borderColor="transparent" style={{ marginBottom: 16 }}>
-        <Row gap={9} style={{ marginBottom: 8 }}>
-          <Feather name="briefcase" size={16} color={colors.brandInk} />
-          <AppText weight="semibold" size={13} color={colors.brandInk}>
-            {t('account_switch_worker_t')}
-          </AppText>
-        </Row>
-        <AppText size={12} color={colors.brandInk} style={{ opacity: 0.85, marginBottom: 12, lineHeight: 18 }}>
-          {t('account_switch_worker_s')}
-        </AppText>
-        <Button title={t('account_switch_worker_btn')} onPress={() => setRole('worker')} />
-      </Card>
-
-      <Button title={t('common_logout')} variant="ghost" onPress={() => {}} />
+      <Button title={t('common_logout')} variant="ghost" onPress={() => logout()} />
     </ScreenContainer>
   );
 }

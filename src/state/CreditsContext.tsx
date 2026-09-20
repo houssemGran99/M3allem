@@ -1,24 +1,47 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import * as creditsApi from '../api/credits';
+import { useAuth } from './AuthContext';
 
 type CreditsContextValue = {
-  balance: number;
-  spendCredit: (amount: number) => void;
-  addCredits: (amount: number) => void;
+  balance: number | null;
+  loading: boolean;
+  refresh: () => Promise<void>;
+  purchase: (packId: string) => Promise<void>;
 };
 
 const CreditsContext = createContext<CreditsContextValue | undefined>(undefined);
 
 export function CreditsProvider({ children }: { children: React.ReactNode }) {
-  const [balance, setBalance] = useState(12);
+  const { status, user } = useAuth();
+  const [balance, setBalance] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const value = useMemo<CreditsContextValue>(
-    () => ({
-      balance,
-      spendCredit: (amount) => setBalance((b) => Math.max(0, b - amount)),
-      addCredits: (amount) => setBalance((b) => b + amount),
-    }),
-    [balance]
-  );
+  const refresh = useCallback(async () => {
+    if (status !== 'authenticated' || user?.role !== 'worker') return;
+    setLoading(true);
+    try {
+      const { creditBalance } = await creditsApi.getBalance();
+      setBalance(creditBalance);
+    } finally {
+      setLoading(false);
+    }
+  }, [status, user?.role]);
+
+  useEffect(() => {
+    if (status === 'authenticated' && user?.role === 'worker') {
+      refresh();
+    } else {
+      setBalance(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, user?.role]);
+
+  const purchase = useCallback(async (packId: string) => {
+    const { creditBalance } = await creditsApi.purchase(packId);
+    setBalance(creditBalance);
+  }, []);
+
+  const value = useMemo<CreditsContextValue>(() => ({ balance, loading, refresh, purchase }), [balance, loading, refresh, purchase]);
 
   return <CreditsContext.Provider value={value}>{children}</CreditsContext.Provider>;
 }

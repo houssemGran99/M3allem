@@ -1,7 +1,7 @@
-import React from 'react';
-import { ScrollView, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppText from '../../components/AppText';
@@ -12,14 +12,56 @@ import Button from '../../components/Button';
 import Pill from '../../components/Pill';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLanguage } from '../../i18n/LanguageContext';
-import { mohamed } from '../../data/mock';
+import { getArtisan } from '../../api/artisans';
+import { completeRequest, getRequest } from '../../api/requests';
+import { ApiArtisanProfile, ApiServiceRequest, ApiUser } from '../../api/types';
+import { ApiClientError } from '../../api/client';
 import { ClientStackParamList } from '../../navigation/types';
 
 export default function AppointmentConfirmedScreen() {
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<ClientStackParamList>>();
-  const artisan = mohamed;
+  const route = useRoute<RouteProp<ClientStackParamList, 'AppointmentConfirmed'>>();
+  const { requestId, artisanId } = route.params;
+
+  const [user, setUser] = useState<ApiUser | null>(null);
+  const [profile, setProfile] = useState<ApiArtisanProfile | null>(null);
+  const [request, setRequest] = useState<ApiServiceRequest | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [completing, setCompleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([getArtisan(artisanId), getRequest(requestId)])
+      .then(([artisanResult, requestResult]) => {
+        setUser(artisanResult.user);
+        setProfile(artisanResult.profile);
+        setRequest(requestResult.request);
+      })
+      .finally(() => setLoading(false));
+  }, [artisanId, requestId]);
+
+  const handleComplete = async () => {
+    setError(null);
+    setCompleting(true);
+    try {
+      await completeRequest(requestId);
+      navigation.navigate('CompletedReview', { requestId, artisanId });
+    } catch (e) {
+      setError(e instanceof ApiClientError ? e.message : 'Something went wrong');
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  if (loading || !user || !profile || !request) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.page, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.brand} size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.page }} edges={['top']}>
@@ -48,42 +90,25 @@ export default function AppointmentConfirmedScreen() {
 
         <Card style={{ marginBottom: 12 }}>
           <Row gap={10}>
-            <Avatar initials={artisan.initials} tint={artisan.avatarTint} size={38} fontSize={13} />
+            <Avatar initials={user.name.slice(0, 2).toUpperCase()} tint="brand" size={38} fontSize={13} />
             <View style={{ flex: 1 }}>
               <AppText weight="semibold" size={13}>
-                {artisan.name}
+                {user.name}
               </AppText>
               <AppText size={11} color={colors.ink2}>
-                {t(artisan.roleKey)}
+                {profile.roleLabel[lang]}
               </AppText>
             </View>
             <Pill label={t('pill_confirmed')} tone="g" />
           </Row>
         </Card>
 
-        <Row gap={8} style={{ marginBottom: 12 }}>
-          <Card soft padding={10} style={{ flex: 1 }}>
-            <AppText size={11} color={colors.ink2}>
-              {t('lbl_date')}
-            </AppText>
-            <AppText weight="semibold" size={13}>
-              {t('c5_date')}
-            </AppText>
-          </Card>
-          <Card soft padding={10} style={{ flex: 1 }}>
-            <AppText size={11} color={colors.ink2}>
-              {t('lbl_time')}
-            </AppText>
-            <AppText weight="semibold" size={13}>
-              15:00 – 15:30
-            </AppText>
-          </Card>
-        </Row>
-
         <Card style={{ marginBottom: 14 }}>
           <Row gap={8}>
             <Feather name="map" size={14} color={colors.ink2} />
-            <AppText size={12}>{t('c2_addr_sub')}</AppText>
+            <AppText size={12}>
+              {request.address.line}, {request.address.city}
+            </AppText>
           </Row>
         </Card>
 
@@ -96,7 +121,13 @@ export default function AppointmentConfirmedScreen() {
           </Row>
         </Card>
 
-        <Button title={t('c5_whatsapp')} onPress={() => navigation.navigate('CompletedReview', { artisanId: artisan.id })} />
+        {error && (
+          <AppText size={12} color={colors.red} style={{ marginBottom: 10 }}>
+            {error}
+          </AppText>
+        )}
+
+        <Button title={t('c5_whatsapp')} onPress={handleComplete} loading={completing} />
         <AppText size={11} color={colors.ink2} style={{ textAlign: 'center', marginTop: 10 }} onPress={() => navigation.popToTop()}>
           {t('c5_cancel')}
         </AppText>

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import ScreenContainer from '../../components/ScreenContainer';
 import AppText from '../../components/AppText';
 import { Row, Between } from '../../components/Row';
@@ -9,6 +10,8 @@ import Pill from '../../components/Pill';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useWorkerData } from '../../state/WorkerDataContext';
+import { timeAgo } from '../../utils/timeAgo';
+import { ApiQuoteStatus } from '../../api/types';
 
 const tabs = ['pending', 'accepted', 'done'] as const;
 type Tab = (typeof tabs)[number];
@@ -17,14 +20,22 @@ const tabLabelKey: Record<Tab, 'w3_tab_pending' | 'w3_tab_accepted' | 'w3_tab_do
   accepted: 'w3_tab_accepted',
   done: 'w3_tab_done',
 };
+const statusForTab: Record<Tab, ApiQuoteStatus> = { pending: 'pending', accepted: 'accepted', done: 'declined' };
 
 export default function MyQuotesScreen() {
   const { colors } = useTheme();
-  const { t } = useLanguage();
-  const { quotesSent } = useWorkerData();
+  const { t, lang } = useLanguage();
+  const { quotesSent, quotesLoading, refreshQuotes } = useWorkerData();
   const [tab, setTab] = useState<Tab>('pending');
 
-  const visible = tab === 'done' ? [] : quotesSent.filter((q) => q.status === tab);
+  useFocusEffect(
+    useCallback(() => {
+      refreshQuotes();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
+
+  const visible = quotesSent.filter((q) => q.status === statusForTab[tab]);
   const acceptedCount = quotesSent.filter((q) => q.status === 'accepted').length;
 
   return (
@@ -42,24 +53,32 @@ export default function MyQuotesScreen() {
         ))}
       </Row>
 
-      {visible.map((q) => (
-        <Card key={q.id} style={{ marginBottom: 9 }} borderColor={q.highlighted ? colors.brand : colors.line}>
-          <Between>
-            <AppText weight="semibold" size={13}>
-              {t(q.titleKey)}
-            </AppText>
-            <Pill label={t(q.status === 'pending' ? 'w3_status_pending' : 'w3_status_accepted')} tone={q.status === 'pending' ? 'a' : 'g'} />
-          </Between>
-          <AppText size={11} color={colors.ink2} style={{ marginTop: 3 }}>
-            {q.clientName} · {q.price} {t('cur')}
-          </AppText>
-          <AppText size={11} color={colors.ink2}>
-            {t(q.sentKey)}
-          </AppText>
-        </Card>
-      ))}
+      {quotesLoading && <ActivityIndicator color={colors.brand} style={{ marginVertical: 20 }} />}
 
-      {visible.length === 0 && (
+      {!quotesLoading &&
+        visible.map((q) => {
+          const request = typeof q.request === 'object' ? q.request : null;
+          const client = request && typeof request.client === 'object' ? request.client : null;
+          const title = request?.description ? request.description.slice(0, 48) : '—';
+          return (
+            <Card key={q._id} style={{ marginBottom: 9 }} borderColor={q.status === 'accepted' ? colors.brand : colors.line}>
+              <Between>
+                <AppText weight="semibold" size={13} style={{ flex: 1 }} numberOfLines={1}>
+                  {title}
+                </AppText>
+                <Pill label={t(q.status === 'pending' ? 'w3_status_pending' : 'w3_status_accepted')} tone={q.status === 'pending' ? 'a' : 'g'} />
+              </Between>
+              <AppText size={11} color={colors.ink2} style={{ marginTop: 3 }}>
+                {client && 'name' in client ? client.name : '—'} · {q.price} {t('cur')}
+              </AppText>
+              <AppText size={11} color={colors.ink2}>
+                {timeAgo(q.createdAt, lang)}
+              </AppText>
+            </Card>
+          );
+        })}
+
+      {!quotesLoading && visible.length === 0 && (
         <Card soft style={{ alignItems: 'center', padding: 20 }}>
           <AppText size={12} color={colors.ink2}>
             —

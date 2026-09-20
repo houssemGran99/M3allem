@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import ScreenContainer from '../../components/ScreenContainer';
 import AppText from '../../components/AppText';
 import { Row } from '../../components/Row';
@@ -8,11 +10,54 @@ import Button from '../../components/Button';
 import Timeline from '../../components/Timeline';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLanguage } from '../../i18n/LanguageContext';
-import { aeJourney } from '../../data/mock';
+import { advanceJourney, getJourney } from '../../api/aeJourney';
+import { ApiAEStep } from '../../api/types';
+import { ApiClientError } from '../../api/client';
 
 export default function StatusScreen() {
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+
+  const [steps, setSteps] = useState<ApiAEStep[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [advancing, setAdvancing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    getJourney()
+      .then(({ aeJourney }) => setSteps(aeJourney))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
+
+  const handleAdvance = async () => {
+    setError(null);
+    setAdvancing(true);
+    try {
+      const { aeJourney } = await advanceJourney();
+      setSteps(aeJourney);
+    } catch (e) {
+      setError(e instanceof ApiClientError ? e.message : 'Something went wrong');
+    } finally {
+      setAdvancing(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <ScreenContainer scroll={false} contentStyle={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+        <ActivityIndicator color={colors.brand} size="large" />
+      </ScreenContainer>
+    );
+  }
+
+  const hasInProgress = steps.some((s) => s.state === 'now');
 
   return (
     <ScreenContainer>
@@ -30,10 +75,10 @@ export default function StatusScreen() {
       </Card>
 
       <Timeline
-        steps={aeJourney.map((step) => ({
-          id: step.id,
-          title: t(step.titleKey),
-          detail: t(step.subKey),
+        steps={steps.map((step) => ({
+          id: step.key,
+          title: step.title[lang],
+          detail: step.sub[lang],
           state: step.state,
         }))}
       />
@@ -47,7 +92,13 @@ export default function StatusScreen() {
         </Row>
       </Card>
 
-      <Button title={t('w5_continue')} onPress={() => {}} />
+      {error && (
+        <AppText size={12} color={colors.red} style={{ marginBottom: 10 }}>
+          {error}
+        </AppText>
+      )}
+
+      <Button title={t('w5_continue')} onPress={handleAdvance} loading={advancing} disabled={!hasInProgress} />
     </ScreenContainer>
   );
 }

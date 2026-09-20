@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppText from '../../components/AppText';
@@ -9,18 +9,56 @@ import { Row, Between } from '../../components/Row';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import ImagePlaceholder from '../../components/ImagePlaceholder';
-import Field from '../../components/Field';
+import TextField from '../../components/TextField';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLanguage } from '../../i18n/LanguageContext';
-import { mohamed, quotes } from '../../data/mock';
+import { getRequest, reviewRequest } from '../../api/requests';
+import { ApiServiceRequest } from '../../api/types';
+import { ApiClientError } from '../../api/client';
 import { ClientStackParamList } from '../../navigation/types';
 
 export default function CompletedReviewScreen() {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const navigation = useNavigation<NativeStackNavigationProp<ClientStackParamList>>();
+  const route = useRoute<RouteProp<ClientStackParamList, 'CompletedReview'>>();
+  const { requestId } = route.params;
+
+  const [request, setRequest] = useState<ApiServiceRequest | null>(null);
+  const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(5);
-  const price = quotes[0].price;
+  const [text, setText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getRequest(requestId)
+      .then(({ request: fetched }) => setRequest(fetched))
+      .finally(() => setLoading(false));
+  }, [requestId]);
+
+  const price = request && typeof request.acceptedQuote === 'object' ? request.acceptedQuote.price : undefined;
+
+  const submit = async () => {
+    setError(null);
+    setSubmitting(true);
+    try {
+      await reviewRequest(requestId, rating, text.trim() || undefined);
+      navigation.popToTop();
+    } catch (e) {
+      setError(e instanceof ApiClientError ? e.message : 'Something went wrong');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading || !request) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.page, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.brand} size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.page }} edges={['top']}>
@@ -67,9 +105,11 @@ export default function CompletedReviewScreen() {
             <AppText weight="semibold" size={12}>
               {t('c6_paid_v')}
             </AppText>
-            <AppText weight="bold" size={14}>
-              {price} {t('cur')}
-            </AppText>
+            {price !== undefined && (
+              <AppText weight="bold" size={14}>
+                {price} {t('cur')}
+              </AppText>
+            )}
           </Between>
           <AppText size={11} color={colors.ink2} style={{ marginTop: 3 }}>
             {t('c6_paid_note')}
@@ -88,9 +128,15 @@ export default function CompletedReviewScreen() {
             ))}
           </Row>
           <View style={{ width: '100%' }}>
-            <Field placeholder={t('c6_review_ph')} multiline />
+            <TextField value={text} onChangeText={setText} placeholder={t('c6_review_ph')} multiline numberOfLines={3} />
           </View>
         </Card>
+
+        {error && (
+          <AppText size={12} color={colors.red} style={{ marginBottom: 10 }}>
+            {error}
+          </AppText>
+        )}
 
         <Card bg={colors.brandSoft} borderColor="transparent">
           <Row gap={8}>
@@ -102,7 +148,7 @@ export default function CompletedReviewScreen() {
         </Card>
       </ScrollView>
       <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: colors.line }}>
-        <Button title={t('c6_submit')} onPress={() => navigation.popToTop()} />
+        <Button title={t('c6_submit')} onPress={submit} loading={submitting} />
       </View>
     </SafeAreaView>
   );

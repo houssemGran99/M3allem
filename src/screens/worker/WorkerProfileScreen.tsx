@@ -12,34 +12,41 @@ import ProgressBar from '../../components/ProgressBar';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLanguage } from '../../i18n/LanguageContext';
-import { mohamed } from '../../data/mock';
+import { useAuth } from '../../state/AuthContext';
 
 export default function WorkerProfileScreen() {
-  const { colors, setRole } = useTheme();
-  const { t } = useLanguage();
-  const artisan = mohamed;
-  const shownCredentials = artisan.credentials.filter((c) => c.id !== 'ref');
+  const { colors } = useTheme();
+  const { t, lang } = useLanguage();
+  const { user, artisanProfile, logout } = useAuth();
+
+  if (!user || !artisanProfile) return null;
+
+  const shownCredentials = artisanProfile.credentials.filter((c) => c.type !== 'referral');
+  const replyLabel =
+    artisanProfile.replyTimeMinutes < 60
+      ? `<${artisanProfile.replyTimeMinutes} min`
+      : `<${Math.round(artisanProfile.replyTimeMinutes / 60)}h`;
 
   return (
     <ScreenContainer>
       <Row gap={12} style={{ marginBottom: 14 }}>
-        <Avatar initials={artisan.initials} tint={artisan.avatarTint} size={56} fontSize={18} />
+        <Avatar initials={user.name.slice(0, 2).toUpperCase()} tint="brand" size={56} fontSize={18} />
         <View style={{ flex: 1 }}>
           <Row gap={5}>
             <AppText weight="semibold" size={16}>
-              {artisan.name}
+              {user.name}
             </AppText>
-            <VerifiedBadge size={14} />
+            {artisanProfile.verified && <VerifiedBadge size={14} />}
           </Row>
           <AppText size={11} color={colors.ink2}>
-            {t(artisan.roleKey)}
+            {artisanProfile.roleLabel[lang]}
           </AppText>
           <Row gap={6} style={{ marginTop: 2 }}>
             <AppText weight="bold" size={12} color={colors.amber}>
-              {artisan.rating.toFixed(1)}★
+              {artisanProfile.rating.toFixed(1)}★
             </AppText>
             <AppText size={12} color={colors.ink2}>
-              · {artisan.jobCount} {t('w6_jobs_l')}
+              · {artisanProfile.jobCount} {t('w6_jobs_l')}
             </AppText>
           </Row>
         </View>
@@ -50,10 +57,10 @@ export default function WorkerProfileScreen() {
           <AppText weight="semibold" size={13}>
             {t('w6_score')}
           </AppText>
-          <Pill label={t('w6_top')} tone="g" />
+          {artisanProfile.verified && <Pill label={t('w6_top')} tone="g" />}
         </Between>
         <View style={{ marginBottom: 9 }}>
-          <ProgressBar pct={94} color={colors.brand} />
+          <ProgressBar pct={artisanProfile.completionPct} color={colors.brand} />
         </View>
         <Between>
           <View>
@@ -61,7 +68,7 @@ export default function WorkerProfileScreen() {
               {t('w6_stat1')}
             </AppText>
             <AppText weight="semibold" size={13}>
-              98%
+              {artisanProfile.completionPct}%
             </AppText>
           </View>
           <View>
@@ -69,7 +76,7 @@ export default function WorkerProfileScreen() {
               {t('w6_stat2')}
             </AppText>
             <AppText weight="semibold" size={13}>
-              96%
+              {artisanProfile.onTimePct}%
             </AppText>
           </View>
           <View>
@@ -77,7 +84,7 @@ export default function WorkerProfileScreen() {
               {t('w6_stat3')}
             </AppText>
             <AppText weight="semibold" size={13}>
-              {t('w6_stat3_v')}
+              {replyLabel}
             </AppText>
           </View>
         </Between>
@@ -86,17 +93,25 @@ export default function WorkerProfileScreen() {
       <AppText size={11} weight="semibold" color={colors.ink3} style={{ marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
         {t('w6_lbl_verif')}
       </AppText>
-      <Card padding={0} style={{ overflow: 'hidden', marginBottom: 12 }}>
-        {shownCredentials.map((c, i) => (
-          <Row key={c.id} gap={9} style={{ padding: 11, borderBottomWidth: i === shownCredentials.length - 1 ? 0 : 1, borderBottomColor: colors.line }}>
-            <Feather name="shield" size={15} color={colors.brand} />
-            <AppText size={13} weight="semibold" style={{ flex: 1 }}>
-              {t(c.labelKey)}
-            </AppText>
-            <Pill label={t('w6_live')} tone="g" />
-          </Row>
-        ))}
-      </Card>
+      {shownCredentials.length > 0 ? (
+        <Card padding={0} style={{ overflow: 'hidden', marginBottom: 12 }}>
+          {shownCredentials.map((c, i) => (
+            <Row key={c.type} gap={9} style={{ padding: 11, borderBottomWidth: i === shownCredentials.length - 1 ? 0 : 1, borderBottomColor: colors.line }}>
+              <Feather name="shield" size={15} color={c.status === 'live' ? colors.brand : colors.amber} />
+              <AppText size={13} weight="semibold" style={{ flex: 1 }}>
+                {c.label[lang]}
+              </AppText>
+              <Pill label={t(c.status === 'live' ? 'w6_live' : 'w3_status_pending')} tone={c.status === 'live' ? 'g' : 'a'} />
+            </Row>
+          ))}
+        </Card>
+      ) : (
+        <Card soft style={{ marginBottom: 12 }}>
+          <AppText size={12} color={colors.ink2}>
+            —
+          </AppText>
+        </Card>
+      )}
 
       <Card style={{ marginBottom: 16 }}>
         <Row gap={9}>
@@ -114,18 +129,7 @@ export default function WorkerProfileScreen() {
         </Row>
       </Card>
 
-      <Card bg={colors.brandSoft} borderColor="transparent" style={{ marginBottom: 12 }}>
-        <Row gap={9} style={{ marginBottom: 8 }}>
-          <Feather name="user" size={16} color={colors.brandInk} />
-          <AppText weight="semibold" size={13} color={colors.brandInk}>
-            {t('account_switch_client_t')}
-          </AppText>
-        </Row>
-        <AppText size={12} color={colors.brandInk} style={{ opacity: 0.85, marginBottom: 12, lineHeight: 18 }}>
-          {t('account_switch_client_s')}
-        </AppText>
-        <Button title={t('account_switch_client_btn')} onPress={() => setRole('client')} />
-      </Card>
+      <Button title={t('common_logout')} variant="ghost" onPress={() => logout()} />
     </ScreenContainer>
   );
 }

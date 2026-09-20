@@ -24,7 +24,8 @@ export async function createRequest(req: Request, res: Response) {
 export async function listMyRequests(req: Request, res: Response) {
   const requests = await ServiceRequest.find({ client: req.user!.id })
     .sort({ createdAt: -1 })
-    .populate('category');
+    .populate('category')
+    .populate({ path: 'acceptedQuote', populate: { path: 'artisan', select: 'name' } });
   res.json({ requests });
 }
 
@@ -37,7 +38,9 @@ async function canViewRequest(serviceRequest: InstanceType<typeof ServiceRequest
 }
 
 export async function getRequest(req: Request, res: Response) {
-  const serviceRequest = await ServiceRequest.findById(req.params.id).populate('category');
+  const serviceRequest = await ServiceRequest.findById(req.params.id)
+    .populate('category')
+    .populate('acceptedQuote');
   if (!serviceRequest) throw ApiError.notFound('Request not found');
 
   const allowed = await canViewRequest(serviceRequest, req.user!.id, req.user!.role);

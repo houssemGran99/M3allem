@@ -1,7 +1,7 @@
-import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ScreenContainer from '../../components/ScreenContainer';
 import AppText from '../../components/AppText';
@@ -12,82 +12,146 @@ import Button from '../../components/Button';
 import Chip from '../../components/Chip';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLanguage } from '../../i18n/LanguageContext';
-import { quotes } from '../../data/mock';
+import { useClientData } from '../../state/ClientDataContext';
+import { listQuotesForRequest } from '../../api/requests';
+import { ApiArtisanProfile, ApiQuote } from '../../api/types';
 import { ClientStackParamList } from '../../navigation/types';
+
+type QuoteRow = { quote: ApiQuote; artisanProfile: ApiArtisanProfile | null };
 
 export default function QuotesScreen() {
   const { colors } = useTheme();
   const { t } = useLanguage();
+  const { activeRequest, refresh } = useClientData();
   const navigation = useNavigation<NativeStackNavigationProp<ClientStackParamList>>();
+
+  const [rows, setRows] = useState<QuoteRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    await refresh();
+    if (!activeRequest) {
+      setRows([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { quotes } = await listQuotesForRequest(activeRequest._id);
+      setRows(quotes);
+    } finally {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeRequest?._id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
+
+  if (!activeRequest) {
+    return (
+      <ScreenContainer>
+        <AppText weight="semibold" size={17} style={{ marginBottom: 8 }}>
+          {t('nav_quotes')}
+        </AppText>
+        <Card soft style={{ alignItems: 'center', padding: 24 }}>
+          <AppText size={12} color={colors.ink2} style={{ textAlign: 'center' }}>
+            {t('c3_empty_no_request')}
+          </AppText>
+        </Card>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>
       <AppText weight="semibold" size={17}>
-        {t('c3_title')}
+        {rows.length} {t('c3_title_suffix')}
       </AppText>
-      <AppText size={11} color={colors.ink2} style={{ marginTop: 2, marginBottom: 10 }}>
-        {t('c3_sub')}
+      <AppText size={11} color={colors.ink2} numberOfLines={1} style={{ marginTop: 2, marginBottom: 10 }}>
+        {activeRequest.description}
       </AppText>
       <Row gap={6} style={{ marginBottom: 12 }}>
         <Chip label={t('c3_sort')} active />
       </Row>
 
-      {quotes.map((quote, index) => (
-        <TouchableOpacity
-          key={quote.id}
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('ArtisanProfile', { artisanId: quote.artisanId })}
-        >
-          <Card borderColor={quote.highlighted ? colors.brand : colors.line} style={{ marginBottom: 9 }}>
-            <Row gap={10} style={{ alignItems: 'flex-start' }}>
-              <Avatar initials={quote.initials} tint={quote.avatarTint} size={44} fontSize={14} />
-              <View style={{ flex: 1 }}>
-                <Between>
-                  <AppText weight="semibold" size={13}>
-                    {quote.artisanName}
-                  </AppText>
-                  <AppText weight="semibold" size={13}>
-                    {quote.price} {t('cur')}
-                  </AppText>
-                </Between>
-                <Row gap={6} style={{ marginTop: 2 }}>
-                  <AppText weight="bold" size={11} color={colors.amber}>
-                    {quote.rating.toFixed(1)} ★
-                  </AppText>
-                  <AppText size={11} color={colors.ink2}>
-                    · {quote.distanceKm} km
-                  </AppText>
+      {loading && <ActivityIndicator color={colors.brand} style={{ marginVertical: 20 }} />}
+
+      {!loading &&
+        rows.map(({ quote, artisanProfile }, index) => {
+          const artisan = typeof quote.artisan === 'object' ? quote.artisan : null;
+          const artisanId = typeof quote.artisan === 'string' ? quote.artisan : quote.artisan._id;
+          const highlighted = index === 0;
+          return (
+            <TouchableOpacity
+              key={quote._id}
+              activeOpacity={0.85}
+              onPress={() =>
+                navigation.navigate('ArtisanProfile', { artisanId, requestId: activeRequest._id, quoteId: quote._id })
+              }
+            >
+              <Card borderColor={highlighted ? colors.brand : colors.line} style={{ marginBottom: 9 }}>
+                <Row gap={10} style={{ alignItems: 'flex-start' }}>
+                  <Avatar initials={(artisan?.name ?? '??').slice(0, 2).toUpperCase()} tint="brand" size={44} fontSize={14} />
+                  <View style={{ flex: 1 }}>
+                    <Between>
+                      <AppText weight="semibold" size={13}>
+                        {artisan?.name ?? '—'}
+                      </AppText>
+                      <AppText weight="semibold" size={13}>
+                        {quote.price} {t('cur')}
+                      </AppText>
+                    </Between>
+                    {artisanProfile && (
+                      <Row gap={6} style={{ marginTop: 2 }}>
+                        <AppText weight="bold" size={11} color={colors.amber}>
+                          {artisanProfile.rating.toFixed(1)} ★
+                        </AppText>
+                      </Row>
+                    )}
+                    {quote.message && (
+                      <AppText size={11} color={colors.ink2} style={{ marginTop: 5 }}>
+                        « {quote.message} »
+                      </AppText>
+                    )}
+                  </View>
                 </Row>
-                {quote.noteKey && (
-                  <AppText size={11} color={colors.ink2} style={{ marginTop: 5 }}>
-                    {t(quote.noteKey)}
-                  </AppText>
-                )}
-              </View>
-            </Row>
-            {index < 2 && (
-              <>
                 <View style={{ height: 1, backgroundColor: colors.line, marginVertical: 10 }} />
                 <Between>
                   <Row gap={5}>
-                    <Feather name="clock" size={13} color={quote.highlighted ? colors.brand : colors.ink2} />
-                    <AppText size={12} weight={quote.highlighted ? 'bold' : 'regular'} color={quote.highlighted ? colors.brand : colors.ink2}>
-                      {t(quote.timeKey)}
+                    <Feather name="clock" size={13} color={highlighted ? colors.brand : colors.ink2} />
+                    <AppText size={12} weight={highlighted ? 'bold' : 'regular'} color={highlighted ? colors.brand : colors.ink2}>
+                      {quote.timeSlot}
                     </AppText>
                   </Row>
                   <Button
                     title={t('c3_chat')}
                     size="sm"
                     fullWidth={false}
-                    variant={quote.highlighted ? 'primary' : 'ghost'}
-                    onPress={() => navigation.navigate('ArtisanProfile', { artisanId: quote.artisanId })}
+                    variant={highlighted ? 'primary' : 'ghost'}
+                    onPress={() =>
+                      navigation.navigate('ArtisanProfile', { artisanId, requestId: activeRequest._id, quoteId: quote._id })
+                    }
                   />
                 </Between>
-              </>
-            )}
-          </Card>
-        </TouchableOpacity>
-      ))}
+              </Card>
+            </TouchableOpacity>
+          );
+        })}
+
+      {!loading && rows.length === 0 && (
+        <Card soft style={{ alignItems: 'center', padding: 24 }}>
+          <AppText size={12} color={colors.ink2} style={{ textAlign: 'center' }}>
+            {t('c3_empty_no_quotes')}
+          </AppText>
+        </Card>
+      )}
     </ScreenContainer>
   );
 }

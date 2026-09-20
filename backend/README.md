@@ -123,8 +123,32 @@ All authenticated routes expect `Authorization: Bearer <token>`.
 
 ## Connecting the Expo app
 
-The React Native app currently reads from local mock data
-(`src/data/mock.ts`) and in-memory contexts (`CreditsContext`,
-`WorkerDataContext`) rather than this API — wiring the two together (an API
-client, auth/token storage, loading/error states per screen) is a separate
-follow-up, since it touches most screens in the app.
+The React Native app (repo root, run `npm install && npm start` there) is
+wired to this API: real login/register screens, a JWT stored via
+`AsyncStorage`, and every screen fetching/mutating through `src/api/*.ts`.
+There is no more mock data or client-side role switch — which app you see
+(client or worker) is whichever role your account was registered with.
+
+Point the app at this backend by setting `EXPO_PUBLIC_API_BASE_URL` (Expo
+inlines `EXPO_PUBLIC_*` env vars automatically) before starting it, e.g.:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://192.168.1.23:4000/api npx expo start
+```
+
+- Defaults to `http://localhost:4000/api`, which works for the iOS
+  simulator or Expo web running on the same machine as the API.
+- On a physical phone via Expo Go, `localhost` refers to the phone itself —
+  use your computer's LAN IP instead (as above).
+- On the Android emulator, use `http://10.0.2.2:4000/api`.
+
+The Login screen has "Démo client" / "Démo artisan" buttons that sign in
+with the seeded demo accounts above, so there's no need to type credentials
+to try it out once both the API and a MongoDB instance are running.
+
+This integration was verified against a hand-written mock server that
+mirrors this API's exact request/response shapes (registration, posting a
+request, unlocking a lead, submitting and accepting a quote, purchasing
+credits, advancing the AE journey, RTL/dark mode) rather than against a
+live MongoDB, for the same sandboxing reason noted above. Point the app at
+a real running instance of this backend to confirm the last mile.

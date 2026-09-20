@@ -1,3 +1,8 @@
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
 export type ClientTabParamList = {
   Home: undefined;
   PostRequest: undefined;
@@ -8,9 +13,9 @@ export type ClientTabParamList = {
 
 export type ClientStackParamList = ClientTabParamList & {
   ClientTabs: undefined;
-  ArtisanProfile: { artisanId: string };
-  AppointmentConfirmed: { artisanId: string };
-  CompletedReview: { artisanId: string };
+  ArtisanProfile: { artisanId: string; requestId?: string; quoteId?: string };
+  AppointmentConfirmed: { requestId: string; quoteId: string; artisanId: string };
+  CompletedReview: { requestId: string; artisanId: string };
 };
 
 export type WorkerTabParamList = {
