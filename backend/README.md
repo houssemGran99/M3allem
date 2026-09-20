@@ -123,8 +123,8 @@ All authenticated routes expect `Authorization: Bearer <token>`.
 
 ## Connecting the Expo app
 
-The React Native app (repo root, run `npm install && npm start` there) is
-wired to this API: real login/register screens, a JWT stored via
+The React Native app (in `../frontend`, run `npm install && npm start`
+there) is wired to this API: real login/register screens, a JWT stored via
 `AsyncStorage`, and every screen fetching/mutating through `src/api/*.ts`.
 There is no more mock data or client-side role switch — which app you see
 (client or worker) is whichever role your account was registered with.
