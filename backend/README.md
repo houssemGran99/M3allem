@@ -123,9 +123,9 @@ All authenticated routes expect `Authorization: Bearer <token>`.
 
 ## Connecting the Expo app
 
-The React Native app (in `../frontend`, run `npm install && npm start`
-there) is wired to this API: real login/register screens, a JWT stored via
-`AsyncStorage`, and every screen fetching/mutating through `src/api/*.ts`.
+The React Native app lives in `../frontend` and is wired to this API: real
+login/register screens, a JWT stored via `AsyncStorage`, and every screen
+fetching/mutating through `frontend/src/api/*.ts`.
 There is no more mock data or client-side role switch — which app you see
 (client or worker) is whichever role your account was registered with.
 
@@ -133,6 +133,8 @@ Point the app at this backend by setting `EXPO_PUBLIC_API_BASE_URL` (Expo
 inlines `EXPO_PUBLIC_*` env vars automatically) before starting it, e.g.:
 
 ```bash
+cd ../frontend
+npm install
 EXPO_PUBLIC_API_BASE_URL=http://192.168.1.23:4000/api npx expo start
 ```
 
